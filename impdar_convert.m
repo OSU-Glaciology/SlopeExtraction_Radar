@@ -11,6 +11,7 @@ if isstr(impdar_mat_path) == 1
     Longitude = -1*long; % *1 has been fixed in impdar fork in OSUG, but needs to be here for right now
     Elevation = elev;
     Data = data;
+    data_x = dist;
     %Data(isnan(Data)) = 0;
     %Surface = picks.samp2(1,:)/1e+6; %Make sure that pick1 is ice surface and pick2 is bottom
     Bottom = picks.samp2(2,:)/1e+6;
@@ -20,6 +21,6 @@ if isstr(impdar_mat_path) == 1
     old = '.mat';
     new = '_proc_cresis.mat';
     file_name = replace(file_wo_path,old,new);
-    save(file_name,'Time',"Bottom","Data","Elevation","Longitude","Latitude")
+    save(file_name,'Time',"Bottom","Data","Elevation","Longitude","Latitude","data_x")
 end
 
