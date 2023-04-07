@@ -128,7 +128,7 @@ if plotter == 1
     if exist('max_frequency') == 1 & abs(data_y(2)-data_y(1)) < 1e-4
         imagesc(dist,data_y*cice/2,Data);
     else
-        imagesc(dist,data_y,Data)
+        imagesc(dist,data_y,real(Data))
     end
     colormap(gray)
     hold all
@@ -412,7 +412,7 @@ for k = 1:steps
                     
                     subplot(3,4,4)
                     hold off
-                    imagesc(radon_data) %other complex data why??
+                    imagesc(real(radon_data)) %other complex data why??
                     title(['Data Window - SNR ',sprintf('%.02f',snr)])
 
                     plot_indicator_lines( ...
@@ -421,7 +421,7 @@ for k = 1:steps
                     
                     subplot(3,4,8)
                     hold off
-                    imagesc(rd)
+                    imagesc(real(rd))
                     hold all
                     
                     title(['Radon Transform - RSNR',sprintf('%.02f',rsnr)])

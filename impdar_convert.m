@@ -5,22 +5,26 @@ function [file_name] = impdar_convert(impdar_mat_path)
 % by Kirill Ivanov
 
 if isstr(impdar_mat_path) == 1
-    load(impdar_mat_path)
-    Time = travel_time'/1e+6; %transposed travel_time and converted to seconds (from us) 
-    Latitude = lat;
-    Longitude = -1*long; % *1 has been fixed in impdar fork in OSUG, but needs to be here for right now
-    Elevation = elev;
-    Data = data;
-    data_x = dist;
-    %Data(isnan(Data)) = 0;
+    S = load(impdar_mat_path);
+    Time = S.travel_time'/1e+6; %transposed travel_time and converted to seconds (from us) 
+    Latitude = S.lat;
+    Longitude = -1*S.long; % *1 has been fixed in impdar fork in OSUG, but needs to be here for right now
+    Elevation = S.elev;
+    Data = S.data;
+    data_x = S.dist/1000;  %% S assignment is needed for this line, as there is dist function that gets called first
+    Data(isnan(Data)) = 0;
     %Surface = picks.samp2(1,:)/1e+6; %Make sure that pick1 is ice surface and pick2 is bottom
-    Bottom = picks.samp2(2,:)/1e+6;
+    if all(isnan(S.picks.samp2(2,:))) == 1
+        surface_bottom = S.picks.samp2(1,:)/S.picks.pickparams.dt;
+    else
+        surface_bottom = S.picks.samp2(2,:)/S.picks.pickparams.dt; 
+    end
     %naming a new restructured .mat file
-    match = wildcardPattern + "/";
-    file_wo_path = erase(fn,match);
+    %match = wildcardPattern + "/"; isn't in old matlab
+    %file_wo_path = erase(fn,match);
     old = '.mat';
     new = '_proc_cresis.mat';
-    file_name = replace(file_wo_path,old,new);
-    save(file_name,'Time',"Bottom","Data","Elevation","Longitude","Latitude","data_x")
+    file_name = replace(S.fn,old,new);
+    save(file_name,'Time',"surface_bottom","Data","Elevation","Longitude","Latitude","data_x")
 end
 
