@@ -128,7 +128,7 @@ if plotter == 1
     if exist('max_frequency') == 1 & abs(data_y(2)-data_y(1)) < 1e-4
         imagesc(dist,data_y*cice/2,Data);
     else
-        imagesc(dist,data_y,real(Data))
+        imagesc(dist,data_y,Data)
     end
     colormap(gray)
     hold all
@@ -153,7 +153,7 @@ end
 
 % This breaks the initial computation into cells smaller
 % than the prescribed value, to save on memory
-overload_factor = 1000;
+overload_factor = 1500;
 
 if length(Data(1,:)) > overload_factor
     steps = ceil(length(Data(1,:))/overload_factor);
@@ -191,7 +191,7 @@ for k = 1:steps
         end
     else
         [ xaxis yaxis data] = regrid(dist(breaks(k):breaks(k+1)-1), ...
-            data_y,filt_data,0,0);
+            data_y,filt_data,1500,1500,0,'linear');
         time = yaxis;
     end
     
@@ -412,16 +412,16 @@ for k = 1:steps
                     
                     subplot(3,4,4)
                     hold off
-                    imagesc(real(radon_data)) %other complex data why??
+                    imagesc(radon_data) %other complex data why??
                     title(['Data Window - SNR ',sprintf('%.02f',snr)])
 
                     plot_indicator_lines( ...
                         [tan(deg2rad(-opt_angle(j,i+previous_xsteps))) ...
-                        length(radon_data)/2 length(radon_data)/2],3,'blue')                   
+                        length(radon_data)/2 length(radon_data)/2],3,'blue',1)                   
                     
                     subplot(3,4,8)
                     hold off
-                    imagesc(real(rd))
+                    imagesc(rd)
                     hold all
                     
                     title(['Radon Transform - RSNR',sprintf('%.02f',rsnr)])

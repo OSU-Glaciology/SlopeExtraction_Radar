@@ -21,7 +21,7 @@ function [nx ny output outindsx outindsy] = regrid(xaxis,yaxis,data,nx,ny,subsam
 %           immediately converted to depth, and the data are interpolated to an even
 %           spacing in the x and y direction that is defined by spacing that is 4x
 %           the nyquist frequency of the target data (sample rate provided in ny)
-%    ny - center frequency of the radar data.
+%    ny - center frequency of he radar data.
 %
 % subsample_largergrid - flag, 0 or 1, to indicate if you want the
 %   regridded product to only take the samples of the larger grid that
