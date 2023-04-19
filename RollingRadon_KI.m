@@ -153,7 +153,7 @@ end
 
 % This breaks the initial computation into cells smaller
 % than the prescribed value, to save on memory
-overload_factor = 1500;
+overload_factor = 500;
 
 if length(Data(1,:)) > overload_factor
     steps = ceil(length(Data(1,:))/overload_factor);

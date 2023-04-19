@@ -14,12 +14,12 @@ if isstr(impdar_mat_path) == 1
     data_x = S.dist/1000;  %% S assignment is needed for this line, as there is dist function that gets called first
     Data(isnan(Data)) = 0;
     %Surface = picks.samp2(1,:)/1e+6; %Make sure that pick1 is ice surface and pick2 is bottom
-    %if all(isnan(S.picks.samp2(2,:))) == 1
-    %    surface_bottom = S.picks.samp2(1,:)/S.picks.pickparams.dt;
-    %else
-    %    surface_bottom = S.picks.samp2(2,:)/S.picks.pickparams.dt; 
-    %end
-    surface_bottom = S.picks.samp2(2,:)/S.picks.pickparams.dt; 
+    if all(isnan(S.picks.samp2(2,:))) == 1
+        surface_bottom = S.picks.samp2(1,:)/S.picks.pickparams.dt;
+    else
+        surface_bottom = S.picks.samp2(2,:)/S.picks.pickparams.dt; 
+    end
+    %surface_bottom = S.picks.samp2(2,:)/S.picks.pickparams.dt; 
     %naming a new restructured .mat file
     %match = wildcardPattern + "/"; isn't in old matlab
     %file_wo_path = erase(fn,match);

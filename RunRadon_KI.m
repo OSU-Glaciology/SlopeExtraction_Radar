@@ -24,18 +24,19 @@ clear all
 close all
 
 %KI RunRadon for Europa with data processed with ImpDAR. 
-window = 301;
+window = 201;
 angle_thresh = [6 6];
-plotter = 1;
+plotter = 0;
 movie_flag = 0;
-load(impdar_convert('hill_lake.mat'))
+load(impdar_convert('19_11_hill.mat'))
 %load('proc_cresis.mat')
 %surface_bottom=[surface_elev(end)+1e-3-surface_elev;surface_elev(end)+1e-3-bed_elev];
 Data = imgaussfilt(real(20*log(Data)));
 [r c] = size(Data);
-Data = imresize(Data,[round(r/2) round(c/3)],"nearest");
-[slopegrid_x,slopegrid_y,slopegrid,opt_x,opt_y,opt_angle]=RollingRadon_KI(data_x(1:3:end),Time(1:2:end),Data,window,angle_thresh, ...
-    plotter,surface_bottom,movie_flag);
+Data = imresize(Data,[round(r/1) round(c/2)],"nearest");
+Data(isinf(Data)) = NaN;
+[slopegrid_x,slopegrid_y,slopegrid,opt_x,opt_y,opt_angle]=RollingRadon_KI(data_x(1:2:end),Time,Data,window,angle_thresh, ...
+    plotter,surface_bottom(1:2:end),movie_flag);
 
 
 
