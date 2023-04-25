@@ -28,7 +28,7 @@ window = 201;
 angle_thresh = [6 6];
 plotter = 0;
 movie_flag = 0;
-load(impdar_convert('19_11_hill.mat'))
+load(impdar_convert('18_11_bot_cut.mat'))
 %load('proc_cresis.mat')
 %surface_bottom=[surface_elev(end)+1e-3-surface_elev;surface_elev(end)+1e-3-bed_elev];
 Data = imgaussfilt(real(20*log(Data)));
