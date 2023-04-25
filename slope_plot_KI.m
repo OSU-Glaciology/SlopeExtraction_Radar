@@ -23,9 +23,15 @@ elseif line == 1
     bed_B = readmatrix("18_11_bot.csv");
     bed_B = bed_B(:,4)';
 else
-    A = load('19_11_hill_slope.mat');
-    B = load("19_11_lake_slope.mat");
-    C = load("19_11_bump_slope.mat");
+    A = load('.mat');
+    bed_A = readmatrix("18_6_bot.csv");
+    bed_A = bed_A(:,4)';
+    B = load(".mat");
+    bed_B = readmatrix("18_7_bot.csv");
+    bed_B = bed_B(:,4)';
+    C = load(".mat");
+    bed_C = readmatrix("18_8_bot.csv");
+    bed_C = bed_C(:,4)';
 
 end
 
@@ -83,6 +89,8 @@ if line == 1 || line == 2
     if line == 1
         xd = zeros(1);
         yd = [];
+        figure(1);
+        sgtitle('18 _ 10+11, Wndw - 100, Flow <<--')
         for i = 1:2
             if i == 1
                 S = A;
@@ -102,10 +110,6 @@ if line == 1 || line == 2
             source_resized_to_target_size = interp2(slp, X_samples, Y_samples);
             full_target = [nan((S.window-1)/2,size(source_resized_to_target_size,2)); source_resized_to_target_size];
             full_target = vertcat(full_target,nan((S.window-1)/2,size(source_resized_to_target_size,2)));
-            if i ==1
-                figure(1);
-                sgtitle('18 _ 10+11, Wndw - 100, Flow <<--')
-            end
             if radar == 1
                 ax1 = subplot(211);
             else
@@ -118,8 +122,7 @@ if line == 1 || line == 2
                 Elevation = S.Elevation;
                 Data = S.Data;
                 bed_fix_A = Elevation - bed_A(end:-1:1);
-            end
-            if i == 2
+            elseif i == 2
                 cut = find(~isnan(full_target(:,1)));
                 cut = cut(1);
                 Z1 = [nan(cut,size(Z1,2)); Z1];
@@ -135,7 +138,7 @@ if line == 1 || line == 2
         view(180,90)
         shading interp
         clim([-1,1])
-        colormap(ax1,flipud(CustomColormap))
+        colormap(ax1,CustomColormap)
         cbar = colorbar(ax1);
         set(ax1, 'YDir', 'reverse');
         cbar.Label.String = 'Reflector Slope, Degrees';
@@ -154,7 +157,78 @@ if line == 1 || line == 2
             linkaxes([ax1, ax2], 'x','y');
         end
     else
-        for i = [A B C]
+        xd = zeros(1);
+        yd = [];
+        figure(1);
+        sgtitle('18 _ 6+7+8, Wndw - 100, Flow <<--')
+        for i = 1:3
+            if i == 1
+                S = A;
+            elseif  i == 2
+                S = B;
+            else
+                S = C;
+            end
+            %slope
+            slp = -S.slopegrid;
+            slp(slp == 6) = NaN;
+            yd = [yd; max(S.Elevation) - (S.Time/2 * 1.69e8)];
+            xd = [xd (S.data_x*1000 + max(xd))];
+            %resize
+            sourceSize = size(slp);
+            Data_size = size(S.Data);
+            targetSize = [Data_size(1)-S.window+1,Data_size(2)];
+            [X_samples,Y_samples] = meshgrid(linspace(1,sourceSize(2),targetSize(2)), linspace(1,sourceSize(1),targetSize(1)));
+            source_resized_to_target_size = interp2(slp, X_samples, Y_samples);
+            full_target = [nan((S.window-1)/2,size(source_resized_to_target_size,2)); source_resized_to_target_size];
+            full_target = vertcat(full_target,nan((S.window-1)/2,size(source_resized_to_target_size,2)));
+            if radar == 1
+                ax1 = subplot(211);
+            else
+                ax1 = axes;
+            end
+            if i == 1
+                xlabel(ax1,'Distance, km')
+                ylabel(ax1,'Elevation from sea level, m')
+                Z1 = full_target;
+                Elevation = S.Elevation;
+                Data = S.Data;
+                bed_fix_A = Elevation - bed_A(end:-1:1);
+            elseif i == 2
+                cut = find(~isnan(full_target(:,1)));
+                cut = cut(1);
+                Z1 = [nan(cut,size(Z1,2)); Z1];
+                Data = [nan(cut,size(Data,2)); Data];
+                Z2 = vertcat(full_target,nan(cut,size(full_target,2)));
+                Data_fix = vertcat(S.Data,nan(cut,size(S.Data,2)));
+                bed_fix_B = S.Elevation - bed_B(end:-1:1);
+            else
+                Z3
+            end
+        end
+        Data_size = size(Z1);
+        ydd = linspace(max(yd),min(yd),Data_size(1));
+        surf(xd(2:end),ydd,[Z2 Z1],'FaceColor','interp','EdgeColor','none')
+        view(180,90)
+        shading interp
+        clim([-1,1])
+        colormap(ax1,CustomColormap)
+        cbar = colorbar(ax1);
+        set(ax1, 'YDir', 'reverse');
+        cbar.Label.String = 'Reflector Slope, Degrees';
+        hold on
+        plot(xd(2:end),[S.Elevation Elevation],'k','LineWidth',3)
+        plot(xd(2:end), [bed_fix_B bed_fix_A] ,'k',"LineWidth",3)
+        % Radargram
+        if radar == 1
+            ax2 = subplot(212);
+            imagesc(ax2,xd(2:end), ydd(end:-1:1), [Data_fix Data])
+            colormap(ax2,'bone')
+            colorbar
+            set(ax2, 'XDir', 'reverse');
+            xlabel(ax2,'Distance, km')
+            ylabel(ax2,'Elevation from sea level, m')
+            linkaxes([ax1, ax2], 'x','y');
         end
     end
 end
