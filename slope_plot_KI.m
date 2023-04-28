@@ -14,6 +14,10 @@ line = 1; % 0 - 19_11, 1 - 18_10-11, 2 - 18_6-7-8
 %gaussian filter the slope output
 filter = 1; % 0 - no, 1 - yes
 
+%vertical profile of the reflector slope
+%returns a separate figure with a profile.
+vert_profile = 1; % 0 - no, 1 - yes. 
+
 %% Load
 load('CustomColormap.mat')
 if line == 0
@@ -61,11 +65,12 @@ if line == 0
     else
         ax1 = axes;
     end
+    Slope = full_target;
     if filter == 1
-        filt_data = imgaussfilt(full_target,3);
-        surf(xd,yd,filt_data,'EdgeColor','none','FaceColor','interp')
+        Slope = imgaussfilt(Slope,3);
+        surf(xd,yd,Slope,'EdgeColor','none','FaceColor','interp')
     else
-        surf(xd,yd,full_target,'EdgeColor','none','FaceColor','interp')
+        surf(xd,yd,Slope,'EdgeColor','none','FaceColor','interp')
     end
     view(180,90)
     shading interp
@@ -78,7 +83,11 @@ if line == 0
     ylabel(ax1,'Elevation from sea level, m')
     hold on
     plot(ax1,xd,Elevation,'k','LineWidth',3)
-    plot(ax1,xd, (Elevation - bed(end:-1:1)),'k',"LineWidth",3)
+    bed_elev = Elevation - bed(end:-1:1);
+    plot(ax1,xd, bed_elev,'k',"LineWidth",3)
+    area(ax1, xd, bed_elev-10,min(yd),'FaceColor','white', ...
+        'EdgeColor','none','FaceAlpha',1)
+    ylim(ax1,[min(yd) max(yd)])
     % Radargram
     if radar == 1
         ax2 = subplot(212);
@@ -127,9 +136,9 @@ if line == 1 || line == 2
                 xlabel(ax1,'Distance, km')
                 ylabel(ax1,'Elevation from sea level, m')
                 Z1 = full_target;
-                Elevation = S.Elevation;
+                E1 = S.Elevation;
                 D1 = S.Data;
-                bed_fix_A = Elevation - bed_A(end:-1:1);
+                bed_fix_A = E1 - bed_A(end:-1:1);
             elseif i == 2
                 cut = find(~isnan(S.Data(:,end)));
                 cut = cut(1);
@@ -137,16 +146,20 @@ if line == 1 || line == 2
                 D1 = [nan(cut,size(D1,2)); D1];
                 Z2 = vertcat(full_target,nan(cut,size(full_target,2)));
                 D2 = vertcat(S.Data,nan(cut,size(S.Data,2)));
-                bed_fix_B = S.Elevation - bed_B(end:-1:1);
+                E2 = S.Elevation;
+                bed_fix_B = E2 - bed_B(end:-1:1);
             end
         end
         Data_size = size(Z1);
         ydd = linspace(max(yd),min(yd),Data_size(1));
+        Elevation = [E2 E1];
+        bed_elev = [bed_fix_B bed_fix_A];
+        Slope = [Z2 Z1];
         if filter == 1
-            filt_data = imgaussfilt([Z2 Z1],3);
-            surf(xd(2:end),ydd,filt_data,'FaceColor','interp','EdgeColor','none')
+            Slope = imgaussfilt(Slope,3);
+            surf(xd(2:end),ydd,Slope,'FaceColor','interp','EdgeColor','none')
         else
-            surf(xd(2:end),ydd,[Z2 Z1],'FaceColor','interp','EdgeColor','none')
+            surf(xd(2:end),ydd,Slope,'FaceColor','interp','EdgeColor','none')
         end
         view(180,90)
         shading interp
@@ -156,8 +169,11 @@ if line == 1 || line == 2
         set(ax1, 'YDir', 'reverse');
         cbar.Label.String = 'Reflector Slope, Degrees';
         hold on
-        plot(xd(2:end),[S.Elevation Elevation],'k','LineWidth',3)
-        plot(xd(2:end), [bed_fix_B bed_fix_A] ,'k',"LineWidth",3)
+        plot(xd(2:end),Elevation,'k','LineWidth',3)
+        plot(xd(2:end), bed_elev ,'k',"LineWidth",3)
+        area(xd(2:end), bed_elev-10,min(ydd),'FaceColor','white', ...
+        'EdgeColor','none','FaceAlpha',1)
+        ylim(ax1,[min(ydd) max(ydd)])
         % Radargram
         if radar == 1
             ax2 = subplot(212);
@@ -212,8 +228,6 @@ if line == 1 || line == 2
                 D1 = S.Data;
                 bed_fix_A = E1 - bed_A(end:-1:1);
             elseif i == 2
-                % a - hill on the right, so subset form down, 
-                % b subset from the top by the end of a 
                 Data_size = size(D1);
                 temp_size = size(S.Data);
                 Z2 = vertcat(full_target,nan(Data_size(1)-temp_size(1),size(full_target,2)));
@@ -242,11 +256,14 @@ if line == 1 || line == 2
         end
         Data_size = size(Z1);
         ydd = linspace(max(yd),min(yd),Data_size(1));
+        Elevation = [E3 E2 E1];
+        bed_elev = [bed_fix_C bed_fix_B bed_fix_A];
+        Slope = [Z3 Z2 Z1];
         if filter ==1
-            filt_data = imgaussfilt([Z3 Z2 Z1],3);
-            surf(xd(2:end),ydd,filt_data,'FaceColor','interp','EdgeColor','none')
+            Slope = imgaussfilt(Slope,3);
+            surf(xd(2:end),ydd,Slope,'FaceColor','interp','EdgeColor','none')
         else
-            surf(xd(2:end),ydd,[Z3 Z2 Z1],'FaceColor','interp','EdgeColor','none')
+            surf(xd(2:end),ydd,Slope,'FaceColor','interp','EdgeColor','none')
         end
         view(180,90)
         shading interp
@@ -257,8 +274,11 @@ if line == 1 || line == 2
         cbar.Label.String = 'Reflector Slope, Degrees';
         axis tight
         hold on
-        plot(xd(2:end),[E3 E2 E1],'k','LineWidth',3)
-        plot(xd(2:end), [bed_fix_C bed_fix_B bed_fix_A] ,'k',"LineWidth",3)
+        plot(xd(2:end),Elevation,'k','LineWidth',3)
+        plot(xd(2:end), bed_elev ,'k',"LineWidth",3)
+        area(xd(2:end), bed_elev-10,min(ydd),'FaceColor','white', ...
+        'EdgeColor','none','FaceAlpha',1)
+        ylim(ax1,[min(ydd) max(ydd)])
         % Radargram
         if radar == 1
             ax2 = subplot(212);
@@ -271,4 +291,44 @@ if line == 1 || line == 2
             linkaxes([ax1, ax2], 'x','y');
         end
     end
+end
+%% vertical Profile 
+if vert_profile == 1
+    if filter == 0
+        disp('Recommend to look at vertical slope profile with filtering.')
+    end
+    prompt = 'Click on the slope graph for x input: ';
+    title = 'vertical slope profile';
+    xval = inputdlg(prompt,title);
+    xval = str2double(xval{1});
+    if line ~= 0
+        xd = xd(2:end);
+        yd = ydd;
+    end
+    [~, idx] = min(abs(xd - xval));
+    hold on;
+    plot(xd(idx), yd(idx), 'ro');
+    [xclick, ~] = ginput(1);
+    disp(['X value for vertical profile: ', num2str(xclick),'km.']);
+    hold on 
+    plot(ax1,[xclick xclick],[max(bed_elev) min(Elevation)],'Color','magenta','LineWidth',2)
+    hold off
+    figure(2)
+    sgtitle(['Verical Profile of Reflector Slope at: ', num2str(xclick),'km.'])
+    ax3 = axes;
+    xval = find((xd - xclick)>0);
+    xval = xval(1);
+    yval = find((ydd - max(bed_elev))>0);
+    x = Slope(1:max(yval),xval);
+    y = ydd(1:max(yval));
+    idx = (x < 0);
+    plot(x(idx),y(idx),'r*',x(~idx),y(~idx),'b*')
+    hold on
+    k = isfinite(x);
+    trend = polyfit(x(k), y(k), 2);
+    px = [min(x) max(x)];
+    py = polyval(trend, px);
+    plot(ax3,px, py, 'LineWidth', 2,'LineStyle',':','Color','black');
+    xlabel(ax3,'Reflector Slope, deg')
+    ylabel(ax3,'Elevation from sea level, m') 
 end
