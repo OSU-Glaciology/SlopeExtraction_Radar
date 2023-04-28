@@ -1,3 +1,5 @@
+%% Kirill Ivanov 
+%run to plot resuslts from RollingRadon slope analysis by Nich Holschun
 %% Init
 clear all
 close all
@@ -37,8 +39,6 @@ else
     bed_C = bed_C(:,4)';
 
 end
-
-
 %% Graphing
 if line == 0
     %Slope
@@ -128,15 +128,15 @@ if line == 1 || line == 2
                 ylabel(ax1,'Elevation from sea level, m')
                 Z1 = full_target;
                 Elevation = S.Elevation;
-                Data = S.Data;
+                D1 = S.Data;
                 bed_fix_A = Elevation - bed_A(end:-1:1);
             elseif i == 2
-                cut = find(~isnan(full_target(:,1)));
+                cut = find(~isnan(S.Data(:,end)));
                 cut = cut(1);
                 Z1 = [nan(cut,size(Z1,2)); Z1];
-                Data = [nan(cut,size(Data,2)); Data];
+                D1 = [nan(cut,size(D1,2)); D1];
                 Z2 = vertcat(full_target,nan(cut,size(full_target,2)));
-                Data_fix = vertcat(S.Data,nan(cut,size(S.Data,2)));
+                D2 = vertcat(S.Data,nan(cut,size(S.Data,2)));
                 bed_fix_B = S.Elevation - bed_B(end:-1:1);
             end
         end
@@ -161,7 +161,7 @@ if line == 1 || line == 2
         % Radargram
         if radar == 1
             ax2 = subplot(212);
-            imagesc(ax2,xd(2:end), ydd(end:-1:1), [Data_fix Data])
+            imagesc(ax2,xd(2:end), ydd(end:-1:1), [D2 D1])
             colormap(ax2,'bone')
             colorbar
             set(ax2, 'XDir', 'reverse');
