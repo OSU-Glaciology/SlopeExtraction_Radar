@@ -1,7 +1,7 @@
 %% Kirill Ivanov 
 %run to plot resuslts from RollingRadon slope analysis by Nich Holschun
 %% Init
-clear all
+clear global
 close all
 
 
@@ -9,7 +9,7 @@ close all
 radar = 1; % 0 - no, 1 - yes 
 
 %choose line
-line = 1; % 0 - 19_11, 1 - 18_10-11, 2 - 18_6-7-8
+line = 0; % 0 - 19_11, 1 - 18_10-11, 2 - 18_6-7-8
 
 %gaussian filter the slope output
 filter = 1; % 0 - no, 1 - yes
@@ -91,13 +91,18 @@ if line == 0
     % Radargram
     if radar == 1
         ax2 = subplot(212);
-        imagesc(ax2,xd, yd(end:-1:1), Data)
+        imagesc(ax2,xd, yd, Data)
         colormap(ax2,'bone')
-        colorbar
         set(ax2, 'XDir', 'reverse');
+        set(ax2,'YDir','normal');
         xlabel(ax2,'Distance, km')
         ylabel(ax2,'Elevation from sea level, m')
-        linkaxes([ax1, ax2], 'x','y');
+        pos1 = get(ax1,'Position');
+        pos2 = get(ax2,'Position');
+        pos1(3) = pos2(3);
+        set(ax1,'Position',pos1)
+        axis tight
+        linkaxes([ax1, ax2], 'xy');
     end
 end
 
@@ -177,13 +182,18 @@ if line == 1 || line == 2
         % Radargram
         if radar == 1
             ax2 = subplot(212);
-            imagesc(ax2,xd(2:end), ydd(end:-1:1), [D2 D1])
+            imagesc(ax2,xd(2:end), ydd, [D2 D1])
             colormap(ax2,'bone')
-            colorbar
+            set(ax2,'YDir','normal');
             set(ax2, 'XDir', 'reverse');
             xlabel(ax2,'Distance, km')
             ylabel(ax2,'Elevation from sea level, m')
-            linkaxes([ax1, ax2], 'x','y');
+            pos1 = get(ax1,'Position');
+            pos2 = get(ax2,'Position');
+            pos1(3) = pos2(3);
+            set(ax1,'Position',pos1)
+            axis tight
+            linkaxes([ax1, ax2], 'xy');
         end
     else
         xd = zeros(1);
@@ -282,16 +292,24 @@ if line == 1 || line == 2
         % Radargram
         if radar == 1
             ax2 = subplot(212);
-            imagesc(ax2,xd(2:end), ydd(end:-1:1), [D3(1:1:end-2,:) D2 D1(1:1:end-2,:)])
+            imagesc(ax2,xd(2:end), ydd, [D3(1:1:end-2,:) D2 D1(1:1:end-2,:)])
             colormap(ax2,'bone')
-            colorbar
+            set(ax2,'YDir','normal');
             set(ax2, 'XDir', 'reverse');
             xlabel(ax2,'Distance, km')
             ylabel(ax2,'Elevation from sea level, m')
-            linkaxes([ax1, ax2], 'x','y');
+            pos1 = get(ax1,'Position');
+            pos2 = get(ax2,'Position');
+            pos1(3) = pos2(3);
+            set(ax1,'Position',pos1)
+            axis tight
+            linkaxes([ax1, ax2], 'xy');
         end
     end
 end
+
+clearvars -except ax1 ax2 xd yd ydd D1 D2 D3 Slope Elevation ...
+    bed_elev vert_profile line filter cbar CustomColormap
 %% vertical Profile 
 if vert_profile == 1
     if filter == 0
@@ -318,17 +336,17 @@ if vert_profile == 1
     ax3 = axes;
     xval = find((xd - xclick)>0);
     xval = xval(1);
-    yval = find((ydd - max(bed_elev))>0);
+    yval = find((yd - max(bed_elev))>0);
     x = Slope(1:max(yval),xval);
-    y = ydd(1:max(yval));
+    y = yd(1:max(yval));
     idx = (x < 0);
     plot(x(idx),y(idx),'r*',x(~idx),y(~idx),'b*')
     hold on
-    k = isfinite(x);
-    trend = polyfit(x(k), y(k), 2);
-    px = [min(x) max(x)];
-    py = polyval(trend, px);
-    plot(ax3,px, py, 'LineWidth', 2,'LineStyle',':','Color','black');
+    k = ~isnan(x);
+    p = polyfit(x(k), y(k), 1);
+    f = polyval(p,x);
+    plot(ax3,x, f, 'LineWidth', 2,'LineStyle',':','Color','black');
     xlabel(ax3,'Reflector Slope, deg')
     ylabel(ax3,'Elevation from sea level, m') 
+    xlim(ax3,[-1 1])
 end
