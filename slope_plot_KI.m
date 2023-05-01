@@ -9,38 +9,38 @@ close all
 radar = 1; % 0 - no, 1 - yes 
 
 %choose line
-line = 0; % 0 - 19_11, 1 - 18_10-11, 2 - 18_6-7-8
+line = 1; % 0 - 19_11, 1 - 18_10-11, 2 - 18_6-7-8
 
 %gaussian filter the slope output
 filter = 1; % 0 - no, 1 - yes
 
 %vertical profile of the reflector slope
 %returns a separate figure with a profile.
-vert_profile = 1; % 0 - no, 1 - yes. 
+vert_profile = 0; % 0 - no, 1 - yes. 
 
 %% Load
 load('CustomColormap.mat')
 if line == 0
     load("19_11_full.mat")
-    bed = readmatrix('19_11_bot.csv');
-    bed = bed(:,4)';
+    layer = readmatrix('19_11.csv');
+    layer = layer(:,(4:11))';
 elseif line == 1
     A = load("18_10_full.mat");
-    bed_A = readmatrix("18_10_bot.csv");
-    bed_A = bed_A(:,4)';
+    layer_A = readmatrix("18_10.csv");
+    layer_A = layer_A(:,(4:10))';
     B = load("18_11_full.mat");
-    bed_B = readmatrix("18_11_bot.csv");
-    bed_B = bed_B(:,4)';
+    layer_B = readmatrix("18_11.csv");
+    layer_B = layer_B(:,(4:10))';
 else
     A = load('18_6_full.mat');
-    bed_A = readmatrix("18_6_bot.csv");
-    bed_A = bed_A(:,4)';
+    layer_A = readmatrix("18_6.csv");
+    layer_A = layer_A(:,(4:8))';
     B = load("18_7_full.mat");
-    bed_B = readmatrix("18_7_bot.csv");
-    bed_B = bed_B(:,4)';
+    layer_B = readmatrix("18_7.csv");
+    layer_B = layer_B(:,(4:8))';
     C = load("18_8_full.mat");
-    bed_C = readmatrix("18_8_bot.csv");
-    bed_C = bed_C(:,4)';
+    layer_C = readmatrix("18_8.csv");
+    layer_C = layer_C(:,(4:8))';
 
 end
 %% Graphing
@@ -83,10 +83,13 @@ if line == 0
     ylabel(ax1,'Elevation from sea level, m')
     hold on
     plot(ax1,xd,Elevation,'k','LineWidth',3)
-    bed_elev = Elevation - bed(end:-1:1);
-    plot(ax1,xd, bed_elev,'k',"LineWidth",3)
-    area(ax1, xd, bed_elev-10,min(yd),'FaceColor','white', ...
+    layer_elev = Elevation - layer(:,end:-1:1);
+    plot(ax1,xd, layer_elev(1,:),'k',"LineWidth",3)
+    area(ax1, xd, layer_elev(1,:)-10,min(yd),'FaceColor','white', ...
         'EdgeColor','none','FaceAlpha',1)
+    for i = 2:7
+        plot(ax1,xd,layer_elev(i,:),"Color",[0.7 0.7 0.7],'LineWidth',1.5)
+    end
     ylim(ax1,[min(yd) max(yd)])
     % Radargram
     if radar == 1
@@ -143,7 +146,7 @@ if line == 1 || line == 2
                 Z1 = full_target;
                 E1 = S.Elevation;
                 D1 = S.Data;
-                bed_fix_A = E1 - bed_A(end:-1:1);
+                layer_A = E1 - layer_A(:,end:-1:1);
             elseif i == 2
                 cut = find(~isnan(S.Data(:,end)));
                 cut = cut(1);
@@ -152,13 +155,13 @@ if line == 1 || line == 2
                 Z2 = vertcat(full_target,nan(cut,size(full_target,2)));
                 D2 = vertcat(S.Data,nan(cut,size(S.Data,2)));
                 E2 = S.Elevation;
-                bed_fix_B = E2 - bed_B(end:-1:1);
+                layer_B = E2 - layer_B(:,end:-1:1);
             end
         end
         Data_size = size(Z1);
         ydd = linspace(max(yd),min(yd),Data_size(1));
         Elevation = [E2 E1];
-        bed_elev = [bed_fix_B bed_fix_A];
+        layer_elev = [layer_B layer_A];
         Slope = [Z2 Z1];
         if filter == 1
             Slope = imgaussfilt(Slope,3);
@@ -175,9 +178,12 @@ if line == 1 || line == 2
         cbar.Label.String = 'Reflector Slope, Degrees';
         hold on
         plot(xd(2:end),Elevation,'k','LineWidth',3)
-        plot(xd(2:end), bed_elev ,'k',"LineWidth",3)
-        area(xd(2:end), bed_elev-10,min(ydd),'FaceColor','white', ...
+        plot(xd(2:end), layer_elev(1,:) ,'k',"LineWidth",3)
+        area(xd(2:end), layer_elev(1,:)-10,min(ydd),'FaceColor','white', ...
         'EdgeColor','none','FaceAlpha',1)
+        for i = 2:6
+            plot(xd(2:end),layer_elev(i,:),'Color',[.7 .7 .7],'LineWidth',1.5)
+        end
         ylim(ax1,[min(ydd) max(ydd)])
         % Radargram
         if radar == 1
@@ -236,7 +242,7 @@ if line == 1 || line == 2
                 Z1 = full_target;
                 E1 = S.Elevation;
                 D1 = S.Data;
-                bed_fix_A = E1 - bed_A(end:-1:1);
+                layer_A = E1 - layer_A(:,end:-1:1);
             elseif i == 2
                 Data_size = size(D1);
                 temp_size = size(S.Data);
@@ -249,7 +255,7 @@ if line == 1 || line == 2
                 Z1 = vertcat(Z1,nan(cut+2,size(Z1,2)));
                 D1 = vertcat(D1,nan(cut+2,size(D1,2)));
                 E2 = S.Elevation;
-                bed_fix_B = E2 - bed_B(end:-1:1);
+                layer_B = E2 - layer_B(:,end:-1:1);
                 
             else
                 cut = find(~isnan(D2(:,2)));
@@ -261,13 +267,13 @@ if line == 1 || line == 2
                 Z3 = vertcat(Z3,nan(Data_size(1)-temp_size(1),size(Z3,2)));
                 D3 = vertcat(D3,nan(Data_size(1)-temp_size(1),size(D3,2)));
                 E3 = S.Elevation;
-                bed_fix_C = E3 - bed_C(end:-1:1);
+                layer_C = E3 - layer_C(:,end:-1:1);
             end
         end
         Data_size = size(Z1);
         ydd = linspace(max(yd),min(yd),Data_size(1));
         Elevation = [E3 E2 E1];
-        bed_elev = [bed_fix_C bed_fix_B bed_fix_A];
+        layer_elev = [layer_C layer_B layer_A];
         Slope = [Z3 Z2 Z1];
         if filter ==1
             Slope = imgaussfilt(Slope,3);
@@ -285,9 +291,12 @@ if line == 1 || line == 2
         axis tight
         hold on
         plot(xd(2:end),Elevation,'k','LineWidth',3)
-        plot(xd(2:end), bed_elev ,'k',"LineWidth",3)
-        area(xd(2:end), bed_elev-10,min(ydd),'FaceColor','white', ...
+        plot(xd(2:end), layer_elev(1,:) ,'k',"LineWidth",3)
+        area(xd(2:end), layer_elev(1,:)-10,min(ydd),'FaceColor','white', ...
         'EdgeColor','none','FaceAlpha',1)
+        for i = 2:5
+            plot(xd(2:end),layer_elev(i,:),'Color',[.7 .7 .7],'LineWidth',1.5)
+        end
         ylim(ax1,[min(ydd) max(ydd)])
         % Radargram
         if radar == 1
