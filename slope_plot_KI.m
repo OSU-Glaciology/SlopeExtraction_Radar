@@ -6,7 +6,7 @@ close all
 
 
 % plot radargram as a subplot with the slope plot
-radar = 1; % 0 - no, 1 - yes 
+radar = 0; % 0 - no, 1 - yes 
 
 %choose line
 line = 1; % 0 - 19_11, 1 - 18_10-11, 2 - 18_6-7-8
@@ -16,7 +16,7 @@ filter = 1; % 0 - no, 1 - yes
 
 %vertical profile of the reflector slope
 %returns a separate figure with a profile.
-vert_profile = 0; % 0 - no, 1 - yes. 
+vert_profile = 1; % 0 - no, 1 - yes. 
 
 %% Load
 load('CustomColormap.mat')
@@ -205,7 +205,7 @@ if line == 1 || line == 2
         xd = zeros(1);
         yd = [];
         figure(1);
-        sgtitle('18 _ 6+7+8, Wndw - 100, Flow <<--')
+        sgtitle('18 _ 6+7+8, Wndw - 100, Flow -->>')
         for i = 1:3
             if i == 1
                 S = A;
@@ -318,7 +318,7 @@ if line == 1 || line == 2
 end
 
 clearvars -except ax1 ax2 xd yd ydd D1 D2 D3 Slope Elevation ...
-    bed_elev vert_profile line filter cbar CustomColormap
+    layer_elev vert_profile line filter cbar CustomColormap
 %% vertical Profile 
 if vert_profile == 1
     if filter == 0
@@ -338,14 +338,14 @@ if vert_profile == 1
     [xclick, ~] = ginput(1);
     disp(['X value for vertical profile: ', num2str(xclick),'km.']);
     hold on 
-    plot(ax1,[xclick xclick],[max(bed_elev) min(Elevation)],'Color','magenta','LineWidth',2)
+    plot(ax1,[xclick xclick],[max(layer_elev(1,:)) min(Elevation)],'Color','magenta','LineWidth',2)
     hold off
     figure(2)
     sgtitle(['Verical Profile of Reflector Slope at: ', num2str(xclick),'km.'])
     ax3 = axes;
     xval = find((xd - xclick)>0);
     xval = xval(1);
-    yval = find((yd - max(bed_elev))>0);
+    yval = find((yd - max(layer_elev(1,:)))>0);
     x = Slope(1:max(yval),xval);
     y = yd(1:max(yval));
     idx = (x < 0);
@@ -358,4 +358,73 @@ if vert_profile == 1
     xlabel(ax3,'Reflector Slope, deg')
     ylabel(ax3,'Elevation from sea level, m') 
     xlim(ax3,[-1 1])
+    ylim(ax3,[min(yd) max(yd)])
 end
+%% figure plotting
+fig = figure(4);
+ax1 = subplot(1,3,1,'Parent',fig);
+clear title
+
+Slope_f = imgaussfilt(Slope,2);
+surf(ax1,xd,ydd,Slope_f,'FaceColor','interp','EdgeColor','none')
+title('I9-C9 Line Data Slope Extraction')
+view(180,90)
+shading interp
+clim([-1,1])
+colormap(ax1,CustomColormap)
+cbar = colorbar(ax1,"eastoutside");
+set(ax1, 'YDir', 'reverse');
+cbar.Label.String = 'Reflector Slope, Degrees';
+set(cbar,'Position',cbar.Position + [0.4 0.15 0 -0.3])
+xlabel(ax1,'Distance, km')
+hold on
+plot(xd,Elevation,'k','LineWidth',3)
+plot(xd, layer_elev(1,:) ,'k',"LineWidth",3)
+area(xd, layer_elev(1,:)-10,min(ydd),'FaceColor','white', ...
+'EdgeColor','none','FaceAlpha',1)
+for i = 2:6
+    plot(xd,layer_elev(i,:),'Color',[.7 .7 .7],'LineWidth',1.5)
+end
+plot(ax1,[xclick xclick],[max(layer_elev(1,:)) min(Elevation)],'Color','black', ...
+    'LineWidth',3,'Marker','_')
+ylim(ax1,[min(ydd) max(ydd)])
+box on
+% a_x = [xclick xclick]; 
+% a_y = [0.85 0.85];      
+% annotation('line',a_x,a_y,'String',' Flow Direction ','FontSize',9,'Linewidth',2)
+a_x = [0.5 0.45]; 
+a_y = [0.87 0.87];      
+annotation('textarrow',a_x,a_y,'String',' Flow Direction ','FontSize',9,'Linewidth',2)
+hold off
+
+%radar
+ax = subplot(1,3,2);
+imagesc(ax,xd,ydd,[D2 D1],'AlphaData',0.5)
+linkaxes([ax1 ax],'xy')
+ax.Visible = 'off';
+ax.XTick = [];
+ax.YTick = [];
+colormap(ax,'bone');
+set(ax,'YDir','normal');
+set(ax, 'XDir', 'reverse');
+pos1 = get(ax1,'Position');
+pos1 = pos1 + [0.01 0 0.3 0];
+set([ax1 ax],'Position',pos1);
+
+%trend
+ax2 = subplot(1,3,3);
+plot(ax2,x(idx),y(idx),'r*',x(~idx),y(~idx),'b*')
+title('Verical Profile of Reflector Slope') %#ok<NOPTS>
+xlabel(ax2,'Reflector Slope, deg')
+xlim(ax2,[-1 1])
+ylim(ax2,[min(yd) max(yd)])
+set(gca,'yticklabel',[])
+box on
+h = axes(fig,'visible','off');
+pos2 = get(ax2,'Position');
+pos2 = pos2 + [0.05 0 -0.01 0];
+set(ax2,'Position',pos2)
+axis tight
+h.YLabel.Visible = 'on';
+ylabel(h,'Elevation from sea level, m','FontWeight','bold');
+linkaxes([ax1, ax2], 'y');
