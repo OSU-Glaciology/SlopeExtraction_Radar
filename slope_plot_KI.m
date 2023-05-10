@@ -2,21 +2,22 @@
 %run to plot resuslts from RollingRadon slope analysis by Nich Holschun
 %% Init
 clear global
-close all
+%close all
 
 
 % plot radargram as a subplot with the slope plot
-radar = 0; % 0 - no, 1 - yes 
+radar = 1; % 0 - no, 1 - yes 
 
 %choose line
 line = 1; % 0 - 19_11, 1 - 18_10-11, 2 - 18_6-7-8
 
 %gaussian filter the slope output
-filter = 1; % 0 - no, 1 - yes
+filter = 0; % 0 - no, 1 - yes
 
 %vertical profile of the reflector slope
 %returns a separate figure with a profile.
 vert_profile = 1; % 0 - no, 1 - yes. 
+    wind_vert_prof = 150; % x window for vertical profile to average
 
 %% Load
 load('CustomColormap.mat')
@@ -25,10 +26,10 @@ if line == 0
     layer = readmatrix('19_11.csv');
     layer = layer(:,(4:11))';
 elseif line == 1
-    A = load("18_10_full.mat");
+    A = load("18_10_full_2.mat");
     layer_A = readmatrix("18_10.csv");
     layer_A = layer_A(:,(4:10))';
-    B = load("18_11_full.mat");
+    B = load("18_11_full_2.mat");
     layer_B = readmatrix("18_11.csv");
     layer_B = layer_B(:,(4:10))';
 else
@@ -41,7 +42,6 @@ else
     C = load("18_8_full.mat");
     layer_C = readmatrix("18_8.csv");
     layer_C = layer_C(:,(4:8))';
-
 end
 %% Graphing
 if line == 0
@@ -318,7 +318,7 @@ if line == 1 || line == 2
 end
 
 clearvars -except ax1 ax2 xd yd ydd D1 D2 D3 Slope Elevation ...
-    layer_elev vert_profile line filter cbar CustomColormap
+    layer_elev vert_profile line filter cbar CustomColormap wind_vert_prof
 %% vertical Profile 
 if vert_profile == 1
     if filter == 0
@@ -346,15 +346,19 @@ if vert_profile == 1
     xval = find((xd - xclick)>0);
     xval = xval(1);
     yval = find((yd - max(layer_elev(1,:)))>0);
-    x = Slope(1:max(yval),xval);
+    x = Slope(1:max(yval),xval-wind_vert_prof:xval);
     y = yd(1:max(yval));
-    idx = (x < 0);
-    plot(x(idx),y(idx),'r*',x(~idx),y(~idx),'b*')
+    x_avg = mean(x,2);
+    idx = (x_avg < 0);
+    plot(ax3,x_avg(idx),y(idx),'r*',x_avg(~idx),y(~idx),'b*')
+    %plot(x_avg,y)
+    %colormap(ax3,CustomColormap)
+    clim([-0.5 0.5])
     hold on
-    k = ~isnan(x);
-    p = polyfit(x(k), y(k), 1);
-    f = polyval(p,x);
-    plot(ax3,x, f, 'LineWidth', 2,'LineStyle',':','Color','black');
+    k = ~isnan(x_avg);
+    p = polyfit(x_avg(k), y(k), 1);
+    f = polyval(p,x_avg);
+    plot(ax3,x_avg, f, 'LineWidth', 2,'LineStyle',':','Color','black');
     xlabel(ax3,'Reflector Slope, deg')
     ylabel(ax3,'Elevation from sea level, m') 
     xlim(ax3,[-1 1])
@@ -364,10 +368,9 @@ end
 fig = figure(4);
 ax1 = subplot(1,3,1,'Parent',fig);
 clear title
-
 Slope_f = imgaussfilt(Slope,2);
-surf(ax1,xd,ydd,Slope_f,'FaceColor','interp','EdgeColor','none')
-title('I9-C9 Line Data Slope Extraction')
+surf(ax1,xd,ydd,Slope,'FaceColor','interp','EdgeColor','none')
+title('I9-C9 Line Data Slope Extraction','FontSize',16)
 view(180,90)
 shading interp
 clim([-1,1])
@@ -378,28 +381,44 @@ cbar.Label.String = 'Reflector Slope, Degrees';
 set(cbar,'Position',cbar.Position + [0.4 0.15 0 -0.3])
 xlabel(ax1,'Distance, km')
 hold on
-plot(xd,Elevation,'k','LineWidth',3)
-plot(xd, layer_elev(1,:) ,'k',"LineWidth",3)
-area(xd, layer_elev(1,:)-10,min(ydd),'FaceColor','white', ...
-'EdgeColor','none','FaceAlpha',1)
-for i = 2:6
-    plot(xd,layer_elev(i,:),'Color',[.7 .7 .7],'LineWidth',1.5)
-end
-plot(ax1,[xclick xclick],[max(layer_elev(1,:)) min(Elevation)],'Color','black', ...
-    'LineWidth',3,'Marker','_')
 ylim(ax1,[min(ydd) max(ydd)])
 box on
 % a_x = [xclick xclick]; 
 % a_y = [0.85 0.85];      
 % annotation('line',a_x,a_y,'String',' Flow Direction ','FontSize',9,'Linewidth',2)
 a_x = [0.5 0.45]; 
-a_y = [0.87 0.87];      
-annotation('textarrow',a_x,a_y,'String',' Flow Direction ','FontSize',9,'Linewidth',2)
+a_y = [0.86 0.86];      
+annotation('textarrow',a_x,a_y,'String',' Flow Direction ','FontSize',11,'Linewidth',3)
 hold off
 
 %radar
 ax = subplot(1,3,2);
-imagesc(ax,xd,ydd,[D2 D1],'AlphaData',0.5)
+if line == 1
+    imagesc(ax,xd,ydd,[D2 D1],'AlphaData',0.5)
+elseif line == 2
+    imagesc(ax,xd,ydd,[D3(1:1:end-2,:) D2 D1(1:1:end-2,:)],'AlphaData',0.5)
+else
+    imgesc(ax,xd,ydd,D1,'AlphaData',0.5)
+end
+hold on
+h(1) = plot(ax,[xclick xclick],[max(layer_elev(1,:)) min(Elevation)],'Color','black', ...
+    'LineWidth',1);
+h(2) = plot(ax,[xclick-(wind_vert_prof*0.003) xclick-(wind_vert_prof*0.003)], ...
+    [max(layer_elev(1,:)) min(Elevation)],'Color','black', ...
+    'LineWidth',1);
+h(3) = plot(ax,[xclick xclick-(wind_vert_prof*0.003)],[max(layer_elev(1,:)) max(layer_elev(1,:))], ...
+    'Color','black','LineWidth',1);
+h(3) = plot(ax,[xclick xclick-(wind_vert_prof*0.003)],[min(Elevation) min(Elevation)], ...
+    'Color','black','LineWidth',1);
+uistack(h,'top')
+plot(xd,Elevation,'k','LineWidth',3)
+plot(xd, layer_elev(1,:) ,'k',"LineWidth",3)
+area(xd, layer_elev(1,:)-10,min(ydd),'FaceColor','white', ...
+'EdgeColor','none','FaceAlpha',1)
+max_i = size(layer_elev(:,1));
+for i = 2:max_i(1)
+    plot(xd,layer_elev(i,:),'Color',[.7 .7 .7],'LineWidth',1.5)
+end
 linkaxes([ax1 ax],'xy')
 ax.Visible = 'off';
 ax.XTick = [];
@@ -410,11 +429,12 @@ set(ax, 'XDir', 'reverse');
 pos1 = get(ax1,'Position');
 pos1 = pos1 + [0.01 0 0.3 0];
 set([ax1 ax],'Position',pos1);
+hold off
 
 %trend
 ax2 = subplot(1,3,3);
-plot(ax2,x(idx),y(idx),'r*',x(~idx),y(~idx),'b*')
-title('Verical Profile of Reflector Slope') %#ok<NOPTS>
+plot(ax2,x_avg,y)
+title('Verical Profile of Reflector Slope','FontSize',16)
 xlabel(ax2,'Reflector Slope, deg')
 xlim(ax2,[-1 1])
 ylim(ax2,[min(yd) max(yd)])

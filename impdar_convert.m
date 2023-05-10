@@ -1,4 +1,4 @@
-function [file_name] = impdar_convert(impdar_mat_path)
+    function [file_name] = impdar_convert(impdar_mat_path)
 %IMPDAR_CONVERT Summary of this function goes here
 % Converts data format outputted by ImpDAR to pseudo-CReSIS, just enough
 % for SlopeAnalisys
@@ -13,13 +13,13 @@ if isstr(impdar_mat_path) == 1
     Data = single(S.data);
     data_x = S.dist/1000;  %% S assignment is needed for this line, as there is dist function that gets called first
     Data(isnan(Data)) = 0;
-    %Surface = picks.samp2(1,:)/1e+6; %Make sure that pick1 is ice surface and pick2 is bottom
+    Surface = ones(size(data_x));
     if all(isnan(S.picks.samp2(2,:))) == 1
-        surface_bottom = S.picks.samp2(1,:)/S.picks.pickparams.dt;
+        bed = S.picks.samp2(1,:);
     else
-        surface_bottom = S.picks.samp2(2,:)/S.picks.pickparams.dt; 
+        bed = S.picks.samp2(2,:); 
     end
-    %surface_bottom = S.picks.samp2(2,:)/S.picks.pickparams.dt; 
+    bed = bed*S.picks.pickparams.dt;
     %naming a new restructured .mat file
     %match = wildcardPattern + "/"; isn't in old matlab
     %file_wo_path = erase(fn,match);
@@ -27,6 +27,6 @@ if isstr(impdar_mat_path) == 1
     new = '_proc_cresis.mat';
     %file_name = replace(S.fn,old,new);
     file_name = 'proc_cresis.mat';
-    save('proc_cresis.mat','Time',"surface_bottom","Data","Elevation","Longitude","Latitude","data_x")
+    save('proc_cresis.mat','Time',"bed","Data","Elevation","Longitude","Latitude","data_x","Surface")
 end
 
